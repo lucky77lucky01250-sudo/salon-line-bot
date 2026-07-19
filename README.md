@@ -3,9 +3,25 @@
 美容室オーナー向けの LINE 公式アカウント自動応答システム。
 よくある質問（営業時間・料金・駐車場など）に AI が自動回答し、答えられない質問はオーナーの LINE に通知します。FAQ・メニューはスマホの管理画面から更新でき、臨時休業などのお知らせ一斉配信もできます。
 
-- 要件定義: [docs/requirements.md](docs/requirements.md) ／ 提案書: [docs/proposal.md](docs/proposal.md)
-- オーナー向け操作マニュアル: [docs/handover.md](docs/handover.md)
-- 統合テスト報告: [docs/test-report.md](docs/test-report.md)
+**公開URL**: https://salon-line-bot-five.vercel.app （管理画面。Basic認証つき）
+
+## ドキュメント
+
+| 対象 | ドキュメント |
+|---|---|
+| 発注に至る資料 | [要件定義](docs/requirements.md) ／ [提案書](docs/proposal.md) ／ [WBS](docs/wbs.md) |
+| オーナー（クライアント） | [操作マニュアル](docs/handover.md) |
+| 開発引き継ぎ | [セットアップ手順書](docs/setup.md) ／ [技術ドキュメント](docs/technical.md)（API仕様・DB設計・構成図） |
+| 品質・振り返り | [統合テスト報告書](docs/test-report.md) ／ [振り返りメモ](docs/retrospective.md) |
+
+## スクリーンショット
+
+<!-- TODO(スマホで撮影して docs/images/ に置き、下のコメントを外す)
+| LINE自動応答 | エスカレーション通知 | 管理画面 |
+|---|---|---|
+| ![LINE自動応答](docs/images/line-reply.png) | ![エスカレーション通知](docs/images/line-escalation.png) | ![管理画面](docs/images/admin-home.png) |
+-->
+※実機LINEでの自動応答・【要対応】通知・管理画面のキャプチャを掲載予定
 
 ## 構成
 
