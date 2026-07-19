@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# salon-line-bot — 美容室LINE bot + AI自動応答
 
-## Getting Started
+美容室オーナー向けの LINE 公式アカウント自動応答システム。
+よくある質問（営業時間・料金・駐車場など）に AI が自動回答し、答えられない質問はオーナーの LINE に通知します。FAQ・メニューはスマホの管理画面から更新でき、臨時休業などのお知らせ一斉配信もできます。
 
-First, run the development server:
+- 要件定義: [docs/requirements.md](docs/requirements.md) ／ 提案書: [docs/proposal.md](docs/proposal.md)
+- オーナー向け操作マニュアル: [docs/handover.md](docs/handover.md)
+- 統合テスト報告: [docs/test-report.md](docs/test-report.md)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 構成
+
+```
+LINE Messaging API → /api/webhook (署名検証 → 即200 → after()でAI処理)
+                          ↓
+                    Claude API（FAQ+メニューを根拠に回答+確信度判定）
+                          ↓
+        ┌─ 確信度 high/medium → replyMessageで自動回答
+        └─ 確信度 low        → 「オーナーが確認します」+ オーナーへpush通知
+                          ↓
+                Supabase conversations に全会話ログ保存
+
+/admin（Basic認証） → FAQ・メニュー編集（Server Actions）+ お知らせ一斉配信
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| 層 | 技術 |
+|---|---|
+| フロント/API | Next.js 16 (App Router) + TypeScript + Tailwind CSS / Vercel |
+| DB | Supabase（faq / menus / conversations。RLS有効・ポリシーなし＝service roleのみ） |
+| AI | Claude API（`CLAUDE_MODEL` で切替、デフォルト claude-sonnet-5。構造化出力で回答と確信度を同時生成） |
+| LINE | LINE Messaging API（reply / push / broadcast） |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 主要ファイル
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/api/webhook/route.ts` — LINE Webhook。署名検証→即200→`after()`で応答生成（LINEタイムアウト対策）
+- `app/admin/` — 管理画面（FAQ / メニュー / お知らせ配信）。スマホ375px基準
+- `proxy.ts` — `/admin` 配下のBasic認証（Next.js 16でmiddlewareから改称）
+- `lib/line.ts` / `lib/claude.ts` / `lib/supabase.ts` — 外部サービスクライアント
+- `docs/sql/` — Supabaseスキーマ（001）と初期データ（002）
 
-## Learn More
+## 環境変数（.env.local / Vercel）
 
-To learn more about Next.js, take a look at the following resources:
+| 変数 | 内容 |
+|---|---|
+| `LINE_CHANNEL_SECRET` | LINEチャネルシークレット（署名検証用） |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINEチャネルアクセストークン |
+| `ANTHROPIC_API_KEY` | Claude APIキー |
+| `CLAUDE_MODEL` | （任意）使用モデル。未設定なら claude-sonnet-5 |
+| `NEXT_PUBLIC_SUPABASE_URL` | SupabaseプロジェクトURL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase公開キー（現状未使用・将来用） |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase秘密キー（サーバー専用） |
+| `OWNER_LINE_USER_ID` | エスカレーション通知先（オーナーのLINE userId） |
+| `ADMIN_PASSWORD` | 管理画面のBasic認証パスワード |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+キーはコードに直書きせず、必ず環境変数で管理する（値をログに出さない）。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 開発
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev    # http://localhost:3000
+npm run build  # 型チェック込みビルド
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Webhookのローカル検証は、チャネルシークレットでHMAC-SHA256署名を付けたPOSTを `/api/webhook` に送る（LINEの本番Webhook URLはVercelを向いているため、ローカルにはLINEからのイベントは届かない）。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## デプロイ・運用
+
+- `main` へのpushでVercelが自動デプロイ。環境変数変更時はVercelでRedeployが必要
+- LINE Webhook URL: `https://<デプロイ先>/api/webhook`（LINE Developersで設定。応答メッセージOFF/Webhook ON）
+- 運用コスト: Claude API従量課金のみ（他は無料枠）。一斉配信を使う月はLINEの有料プラン（月200通超の場合）が必要
+- FAQ・メニュー・配信の日常操作は [docs/handover.md](docs/handover.md) を参照
