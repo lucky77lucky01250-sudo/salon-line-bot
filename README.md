@@ -16,12 +16,13 @@
 
 ## スクリーンショット
 
-<!-- TODO(スマホで撮影して docs/images/ に置き、下のコメントを外す)
-| LINE自動応答 | エスカレーション通知 | 管理画面 |
-|---|---|---|
-| ![LINE自動応答](docs/images/line-reply.png) | ![エスカレーション通知](docs/images/line-escalation.png) | ![管理画面](docs/images/admin-home.png) |
--->
-※実機LINEでの自動応答・【要対応】通知・管理画面のキャプチャを掲載予定
+| LINE自動応答（FAQから回答） | エスカレーション通知（オーナーのLINE） |
+|---|---|
+| ![LINE自動応答](docs/images/line-reply.png) | ![エスカレーション通知](docs/images/line-escalation.png) |
+
+| 管理画面（スマホ前提・オーナーが自分で更新） |
+|---|
+| ![管理画面](docs/images/admin-home.png) |
 
 ## 構成
 
